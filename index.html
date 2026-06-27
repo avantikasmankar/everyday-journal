@@ -155,6 +155,23 @@
   .api-gate-btn { width: 100%; padding: 12px; background: var(--accent); border: none; color: #fff; border-radius: 10px; font-family: var(--serif); font-size: 17px; cursor: pointer; }
   .api-gate-skip { margin-top: 12px; font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; }
 
+  .behaviour-entry { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+  .behaviour-entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .behaviour-entry-num { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+  .cannabis-form-btns { display: flex; gap: 8px; margin-bottom: 12px; }
+  .form-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 13px; font-family: var(--mono); transition: all 0.15s; text-align: center; }
+  .form-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .size-btns { display: flex; gap: 6px; }
+  .size-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 13px; font-family: var(--mono); transition: all 0.15s; text-align: center; }
+  .size-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .dose-btns { display: flex; gap: 6px; }
+  .dose-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 13px; font-family: var(--mono); transition: all 0.15s; text-align: center; }
+  .dose-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .time-row { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .time-row label { font-size: 12px; color: var(--text2); white-space: nowrap; margin: 0; }
+  .time-row input[type="time"] { flex: 1; }
+  .time-untracked-btn { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 12px; font-family: var(--mono); white-space: nowrap; transition: all 0.15s; }
+  .time-untracked-btn.active { border-color: var(--muted); color: var(--muted); background: var(--surface); }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -227,29 +244,8 @@
           </div>
         </div>
         <div id="outburstDetail" style="display:none;">
-          <div class="field">
-            <label>What happened?</label>
-            <textarea id="outburstText" placeholder="Free write — what happened, who was involved, what you felt…" oninput="scheduleExtract('outburst')"></textarea>
-          </div>
-          <div class="ai-thinking" id="thinking-outburst"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing…</div>
-          <div class="tags-row">
-            <div class="tags-col">
-              <div class="tags-col-label">Keywords</div>
-              <div class="tag-area" id="tags-outburst"></div>
-              <div class="tag-input-row">
-                <input type="text" id="manualTag-outburst" placeholder="Add keyword…" onkeydown="if(event.key==='Enter')addManualTag('outburst','kw')">
-                <button class="tag-add-btn" onclick="addManualTag('outburst','kw')">+ Tag</button>
-              </div>
-            </div>
-            <div class="tags-col">
-              <div class="tags-col-label" style="color:var(--people);">People</div>
-              <div class="tag-area" id="people-outburst"></div>
-              <div class="tag-input-row">
-                <input type="text" id="manualPerson-outburst" placeholder="Add name…" onkeydown="if(event.key==='Enter')addManualTag('outburst','person')">
-                <button class="tag-add-btn" style="color:var(--people);" onclick="addManualTag('outburst','person')">+ Name</button>
-              </div>
-            </div>
-          </div>
+          <div id="outburstEntries"></div>
+          <button class="tag-add-btn" onclick="addBehaviourEntry('outburst')" style="margin-top:4px;">+ Add another</button>
         </div>
       </div>
 
@@ -263,29 +259,8 @@
           </div>
         </div>
         <div id="controlledDetail" style="display:none;">
-          <div class="field">
-            <label>What did you feel the urge to do? What did you do instead?</label>
-            <textarea id="controlledText" placeholder="e.g. wanted to send a voice note but didn't, wrote a message and deleted it…" oninput="scheduleExtract('controlled')"></textarea>
-          </div>
-          <div class="ai-thinking" id="thinking-controlled"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing…</div>
-          <div class="tags-row">
-            <div class="tags-col">
-              <div class="tags-col-label">Keywords</div>
-              <div class="tag-area" id="tags-controlled"></div>
-              <div class="tag-input-row">
-                <input type="text" id="manualTag-controlled" placeholder="Add keyword…" onkeydown="if(event.key==='Enter')addManualTag('controlled','kw')">
-                <button class="tag-add-btn" onclick="addManualTag('controlled','kw')">+ Tag</button>
-              </div>
-            </div>
-            <div class="tags-col">
-              <div class="tags-col-label" style="color:var(--people);">People</div>
-              <div class="tag-area" id="people-controlled"></div>
-              <div class="tag-input-row">
-                <input type="text" id="manualPerson-controlled" placeholder="Add name…" onkeydown="if(event.key==='Enter')addManualTag('controlled','person')">
-                <button class="tag-add-btn" style="color:var(--people);" onclick="addManualTag('controlled','person')">+ Name</button>
-              </div>
-            </div>
-          </div>
+          <div id="controlledEntries"></div>
+          <button class="tag-add-btn" onclick="addBehaviourEntry('controlled')" style="margin-top:4px;">+ Add another</button>
         </div>
       </div>
 
@@ -299,29 +274,8 @@
           </div>
         </div>
         <div id="instaDetail" style="display:none;">
-          <div class="field">
-            <label>How did it feel?</label>
-            <textarea id="instaFeel" placeholder="What came up — emotionally, in your body…" oninput="scheduleExtract('insta')"></textarea>
-          </div>
-          <div class="ai-thinking" id="thinking-insta"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing…</div>
-          <div class="tags-row">
-            <div class="tags-col">
-              <div class="tags-col-label">Keywords</div>
-              <div class="tag-area" id="tags-insta"></div>
-              <div class="tag-input-row">
-                <input type="text" id="manualTag-insta" placeholder="Add keyword…" onkeydown="if(event.key==='Enter')addManualTag('insta','kw')">
-                <button class="tag-add-btn" onclick="addManualTag('insta','kw')">+ Tag</button>
-              </div>
-            </div>
-            <div class="tags-col">
-              <div class="tags-col-label" style="color:var(--people);">Who</div>
-              <div class="tag-area" id="people-insta"></div>
-              <div class="tag-input-row">
-                <input type="text" id="manualPerson-insta" placeholder="Add name…" onkeydown="if(event.key==='Enter')addManualTag('insta','person')">
-                <button class="tag-add-btn" style="color:var(--people);" onclick="addManualTag('insta','person')">+ Name</button>
-              </div>
-            </div>
-          </div>
+          <div id="instaEntries"></div>
+          <button class="tag-add-btn" onclick="addBehaviourEntry('insta')" style="margin-top:4px;">+ Add another</button>
         </div>
       </div>
 
@@ -588,6 +542,10 @@ function setYN(key, val) {
   document.getElementById(key+'-no').classList.toggle('no-active', !val);
   var det = document.getElementById(key+'Detail');
   if (det) det.style.display = val ? 'block' : 'none';
+  // auto-add first entry for behaviour sections
+  if(val && behaviourEntries[key] !== undefined && behaviourEntries[key].length === 0) {
+    addBehaviourEntry(key);
+  }
 }
 var subState = {};
 function setSubYN(key, val) {
@@ -596,15 +554,109 @@ function setSubYN(key, val) {
   document.getElementById(key+'-no').classList.toggle('no-active', !val);
   var det = document.getElementById(key+'Detail');
   if (det) det.style.display = val ? 'block' : 'none';
+  if(val && key==='cannabis' && cannabisEntries.length===0) { addCannabisEntry(); }
 }
 
 var sectionTags = { outburst:[], controlled:[], insta:[] };
 var sectionPeople = { outburst:[], controlled:[], insta:[] };
 var extractTimers = {};
 
+// Multi-entry behaviour state: outburstEntries, controlledEntries, instaEntries
+var behaviourEntries = { outburst:[], controlled:[], insta:[] };
+
+var behaviourLabels = {
+  outburst: { text: 'What happened?', placeholder: 'Free write — what happened, who was involved, what you felt…' },
+  controlled: { text: 'What did you feel the urge to do? What did you do instead?', placeholder: 'e.g. wanted to send a voice note but didn\'t, wrote a message and deleted it…' },
+  insta: { text: 'How did it feel?', placeholder: 'What came up — emotionally, in your body…' }
+};
+
+function addBehaviourEntry(section) {
+  var idx = behaviourEntries[section].length;
+  behaviourEntries[section].push({ text:'', tags:[], people:[] });
+  renderBehaviourEntries(section);
+  // auto-focus new textarea
+  setTimeout(function(){ var t=document.getElementById('btext-'+section+'-'+idx); if(t) t.focus(); },50);
+}
+
+function removeBehaviourEntry(section, idx) {
+  behaviourEntries[section].splice(idx,1);
+  renderBehaviourEntries(section);
+}
+
+function renderBehaviourEntries(section) {
+  var container = document.getElementById(section+'Entries');
+  if (!container) return;
+  var lbl = behaviourLabels[section];
+  var html = behaviourEntries[section].map(function(entry, idx) {
+    var tagHtml = entry.tags.map(function(t){ return '<span class="tag selected" onclick="removeBEntryTag(\''+section+'\','+idx+',\'kw\',\''+t.replace(/'/g,"\\'")+'\')">\u2715 '+t+'</span>'; }).join('');
+    var peopleHtml = entry.people.map(function(p){ return '<span class="tag people-tag selected" onclick="removeBEntryTag(\''+section+'\','+idx+',\'person\',\''+p.replace(/'/g,"\\'")+'\')">\u2715 '+p+'</span>'; }).join('');
+    var entryNum = behaviourEntries[section].length > 1 ? 'Entry '+(idx+1) : '';
+    return '<div class="behaviour-entry" id="bentry-'+section+'-'+idx+'">'
+      +'<div class="behaviour-entry-header"><span class="behaviour-entry-num">'+entryNum+'</span>'
+      +(behaviourEntries[section].length>1?'<button onclick="removeBehaviourEntry(\''+section+'\','+idx+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;">\u00d7</button>':'')
+      +'</div>'
+      +'<div class="field"><label>'+lbl.text+'</label>'
+      +'<textarea id="btext-'+section+'-'+idx+'" placeholder="'+lbl.placeholder+'" oninput="behaviourEntries[\''+section+'\']['+idx+'].text=this.value;scheduleBExtract(\''+section+'\','+idx+')">'+entry.text+'</textarea></div>'
+      +'<div class="ai-thinking" id="bthinking-'+section+'-'+idx+'"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing…</div>'
+      +'<div class="tags-row">'
+        +'<div class="tags-col"><div class="tags-col-label">Keywords</div>'
+        +'<div class="tag-area" id="btags-'+section+'-'+idx+'">'+tagHtml+'</div>'
+        +'<div class="tag-input-row"><input type="text" id="bmanualTag-'+section+'-'+idx+'" placeholder="Add keyword…" onkeydown="if(event.key===\'Enter\')addBEntryTag(\''+section+'\','+idx+',\'kw\')">'
+        +'<button class="tag-add-btn" onclick="addBEntryTag(\''+section+'\','+idx+',\'kw\')">+ Tag</button></div></div>'
+        +'<div class="tags-col"><div class="tags-col-label" style="color:var(--people);">'+(section==='insta'?'Who':'People')+'</div>'
+        +'<div class="tag-area" id="bpeople-'+section+'-'+idx+'">'+peopleHtml+'</div>'
+        +'<div class="tag-input-row"><input type="text" id="bmanualPerson-'+section+'-'+idx+'" placeholder="Add name…" onkeydown="if(event.key===\'Enter\')addBEntryTag(\''+section+'\','+idx+',\'person\')">'
+        +'<button class="tag-add-btn" style="color:var(--people);" onclick="addBEntryTag(\''+section+'\','+idx+',\'person\')">+ Name</button></div></div>'
+      +'</div>'
+      +'</div>';
+  }).join('');
+  container.innerHTML = html;
+}
+
+function addBEntryTag(section, idx, type) {
+  var isP = type==='person';
+  var inp = document.getElementById(isP?'bmanualPerson-'+section+'-'+idx:'bmanualTag-'+section+'-'+idx);
+  var val = inp.value.trim(); if(!val) return;
+  var arr = isP ? behaviourEntries[section][idx].people : behaviourEntries[section][idx].tags;
+  if(!arr.includes(val)) { arr.push(val); renderBehaviourEntries(section); }
+  inp.value='';
+}
+function removeBEntryTag(section, idx, type, val) {
+  var arr = type==='person' ? behaviourEntries[section][idx].people : behaviourEntries[section][idx].tags;
+  var i=arr.indexOf(val); if(i>-1) arr.splice(i,1);
+  renderBehaviourEntries(section);
+}
+
+var bExtractTimers = {};
+function scheduleBExtract(section, idx) {
+  if(!API_KEY) return;
+  var key = section+'-'+idx;
+  clearTimeout(bExtractTimers[key]);
+  bExtractTimers[key] = setTimeout(function(){ extractBEntryKeywords(section,idx); },1400);
+}
+async function extractBEntryKeywords(section, idx) {
+  var text = behaviourEntries[section][idx] ? behaviourEntries[section][idx].text : '';
+  if(text.length<20) return;
+  var thinking = document.getElementById('bthinking-'+section+'-'+idx);
+  if(thinking) thinking.classList.add('show');
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:'Analyse this personal journal entry. Return ONLY a JSON object with two arrays, no preamble, no markdown:\n{"keywords":["emotion or dynamic or trigger 2-3 words max"],"people":["first names of specific people mentioned"]}\n\nExtract 4-8 keywords focused on emotional patterns, dynamics, triggers. Extract first names of any specific people mentioned.\n\nEntry: "'+text+'"'}]})});
+    var data = await res.json();
+    var raw=(data.content&&data.content[0]&&data.content[0].text)||'{}';
+    var parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    var entry=behaviourEntries[section][idx];
+    (parsed.keywords||[]).forEach(function(k){ if(!entry.tags.includes(k)) entry.tags.push(k); });
+    (parsed.people||[]).forEach(function(p){ if(!entry.people.includes(p)) entry.people.push(p); });
+    renderBehaviourEntries(section);
+  } catch(e){ console.error(e); }
+  if(thinking) thinking.classList.remove('show');
+}
+
+// Keep legacy single-section helpers for any remaining references
 function addManualTag(section, type) {
   var isP = type === 'person';
   var inp = document.getElementById(isP ? 'manualPerson-'+section : 'manualTag-'+section);
+  if(!inp) return;
   var val = inp.value.trim();
   if (!val) return;
   var arr = isP ? sectionPeople[section] : sectionTags[section];
@@ -613,8 +665,7 @@ function addManualTag(section, type) {
 }
 function removeTag(section, type, val) {
   var arr = type==='person' ? sectionPeople[section] : sectionTags[section];
-  var i = arr.indexOf(val);
-  if (i>-1) arr.splice(i,1);
+  var i = arr.indexOf(val); if (i>-1) arr.splice(i,1);
   renderTagsAndPeople(section);
 }
 function renderTagsAndPeople(section) {
@@ -623,7 +674,6 @@ function renderTagsAndPeople(section) {
   if(ta) ta.innerHTML = sectionTags[section].map(function(t){return '<span class="tag selected" onclick="removeTag(\''+section+'\',\'kw\',\''+t.replace(/'/g,"\\'")+'\')">\u2715 '+t+'</span>';}).join('');
   if(pa) pa.innerHTML = sectionPeople[section].map(function(t){return '<span class="tag people-tag selected" onclick="removeTag(\''+section+'\',\'person\',\''+t.replace(/'/g,"\\'")+'\')">\u2715 '+t+'</span>';}).join('');
 }
-
 function scheduleExtract(section) {
   if (!API_KEY) return;
   clearTimeout(extractTimers[section]);
@@ -631,17 +681,14 @@ function scheduleExtract(section) {
 }
 async function extractKeywords(section) {
   var text = '';
-  if(section==='outburst') text = document.getElementById('outburstText').value;
-  if(section==='controlled') text = document.getElementById('controlledText').value;
-  if(section==='insta') text = document.getElementById('instaFeel').value;
+  if(section==='outburst') text = (document.getElementById('outburstText')||{}).value||'';
+  if(section==='controlled') text = (document.getElementById('controlledText')||{}).value||'';
+  if(section==='insta') text = (document.getElementById('instaFeel')||{}).value||'';
   if(text.length < 20) return;
-  document.getElementById('thinking-'+section).classList.add('show');
+  var thinking = document.getElementById('thinking-'+section);
+  if(thinking) thinking.classList.add('show');
   try {
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:'Analyse this personal journal entry. Return ONLY a JSON object with two arrays, no preamble, no markdown:\n{"keywords":["emotion or dynamic or trigger 2-3 words max"],"people":["first names of specific people mentioned"]}\n\nExtract 4-8 keywords focused on emotional patterns, dynamics, triggers. Extract first names of any specific people mentioned.\n\nEntry: "'+text+'"'}]})
-    });
+    var res = await fetch('https://api.anthropic.com/v1/messages', {method:'POST',headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:300,messages:[{role:'user',content:'Analyse this personal journal entry. Return ONLY a JSON object with two arrays, no preamble, no markdown:\n{"keywords":["emotion or dynamic or trigger 2-3 words max"],"people":["first names of specific people mentioned"]}\n\nExtract 4-8 keywords focused on emotional patterns, dynamics, triggers. Extract first names of any specific people mentioned.\n\nEntry: "'+text+'"'}]})});
     var data = await res.json();
     var raw = (data.content&&data.content[0]&&data.content[0].text) || '{}';
     var parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
@@ -649,21 +696,40 @@ async function extractKeywords(section) {
     (parsed.people||[]).forEach(function(p){ if(!sectionPeople[section].includes(p)) sectionPeople[section].push(p); });
     renderTagsAndPeople(section);
   } catch(e) { console.error(e); }
-  document.getElementById('thinking-'+section).classList.remove('show');
+  if(thinking) thinking.classList.remove('show');
 }
 
 var cannabisEntries = [];
-function addCannabisEntry() { cannabisEntries.push({time:'',qty:'',unit:'g',form:'joint'}); renderCannabisEntries(); }
+function addCannabisEntry() { cannabisEntries.push({form:'joint',size:'medium',dose:null,time:'',timeUntracked:false}); renderCannabisEntries(); }
 function removeCannabisEntry(i) { cannabisEntries.splice(i,1); renderCannabisEntries(); }
+function setCannabisForm(i, form) { cannabisEntries[i].form=form; renderCannabisEntries(); }
+function setCannabisSize(i, size) { cannabisEntries[i].size=size; renderCannabisEntries(); }
+function setCannabisDose(i, dose) { cannabisEntries[i].dose=dose; renderCannabisEntries(); }
+function toggleCannabisTimeUntracked(i) { cannabisEntries[i].timeUntracked=!cannabisEntries[i].timeUntracked; if(cannabisEntries[i].timeUntracked) cannabisEntries[i].time=''; renderCannabisEntries(); }
 function renderCannabisEntries() {
   document.getElementById('cannabisEntries').innerHTML = cannabisEntries.map(function(e,i){
-    return '<div class="cannabis-entry"><div class="cannabis-entry-grid">'+
-      '<div><label style="font-size:11px;">Time</label><input type="time" value="'+e.time+'" onchange="cannabisEntries['+i+'].time=this.value" /></div>'+
-      '<div><label style="font-size:11px;">Qty</label><input type="number" min="0" placeholder="0" value="'+e.qty+'" onchange="cannabisEntries['+i+'].qty=this.value" /></div>'+
-      '<div><label style="font-size:11px;">Unit</label><select onchange="cannabisEntries['+i+'].unit=this.value"><option '+(e.unit==='g'?'selected':'')+'>g</option><option '+(e.unit==='mg'?'selected':'')+'>mg</option><option '+(e.unit==='hits'?'selected':'')+'>hits</option></select></div>'+
-      '<div><label style="font-size:11px;">Form</label><select onchange="cannabisEntries['+i+'].form=this.value"><option value="joint" '+(e.form==='joint'?'selected':'')+'>Joint</option><option value="pill" '+(e.form==='pill'?'selected':'')+'>Pill</option><option value="vape" '+(e.form==='vape'?'selected':'')+'>Vape</option><option value="chillum" '+(e.form==='chillum'?'selected':'')+'>Chillum</option></select></div>'+
-      '<button onclick="removeCannabisEntry('+i+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;align-self:flex-end;padding-bottom:6px;">\u00d7</button>'+
-      '</div></div>';
+    var isJoint = e.form==='joint';
+    var formBtns = ['joint','edible'].map(function(f){
+      return '<button class="form-btn'+(e.form===f?' active':'')+'" onclick="setCannabisForm('+i+',\''+f+'\')">'+(f==='joint'?'🚬 Joint':'🍪 Edible')+'</button>';
+    }).join('');
+    var specificHtml = '';
+    if(isJoint){
+      specificHtml = '<div><label style="font-size:11px;color:var(--text2);">Size</label><div class="size-btns">'
+        +['small','medium','large'].map(function(s){return '<button class="size-btn'+(e.size===s?' active':'')+'" onclick="setCannabisSize('+i+',\''+s+'\')">'+(s==='small'?'S':s==='medium'?'M':'L')+'</button>';}).join('')
+        +'</div></div>';
+    } else {
+      specificHtml = '<div><label style="font-size:11px;color:var(--text2);">Dose</label><div class="dose-btns">'
+        +[125,250].map(function(d){return '<button class="dose-btn'+(e.dose===d?' active':'')+'" onclick="setCannabisDose('+i+','+d+')">'+d+'mg</button>';}).join('')
+        +'</div></div>';
+    }
+    var timeHtml = '<div class="time-row"><label>Time</label>'
+      +(e.timeUntracked?'<span style="flex:1;font-size:12px;color:var(--muted);font-family:var(--mono);">not tracked</span>':'<input type="time" value="'+e.time+'" onchange="cannabisEntries['+i+'].time=this.value" />')
+      +'<button class="time-untracked-btn'+(e.timeUntracked?' active':'')+'" onclick="toggleCannabisTimeUntracked('+i+')">'+(e.timeUntracked?'set time':'not tracked')+'</button>'
+      +'</div>';
+    return '<div class="cannabis-entry"><div class="behaviour-entry-header"><span class="behaviour-entry-num">'+(cannabisEntries.length>1?'Use '+(i+1):'')+'</span><button onclick="removeCannabisEntry('+i+')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;">\u00d7</button></div>'
+      +'<div class="cannabis-form-btns">'+formBtns+'</div>'
+      +specificHtml+timeHtml
+      +'</div>';
   }).join('');
 }
 
@@ -702,12 +768,15 @@ function saveDay() {
   ['sugar','alcohol','chai','cig'].forEach(function(k){
     if(subState[k]){ subs[k] = {qty:parseFloat(document.getElementById(k+'-qty')&&document.getElementById(k+'-qty').value||0)||0, unit:(document.getElementById(k+'-unit')&&document.getElementById(k+'-unit').value)||''}; }
   });
+  // flatten all tags/people across behaviour entries for patterns
+  function allTags(section){ return [].concat.apply([],behaviourEntries[section].map(function(e){return e.tags;})); }
+  function allPeople(section){ return [].concat.apply([],behaviourEntries[section].map(function(e){return e.people;})); }
   var entry = {
     date:today(), lunar:l,
     period: periodData.active ? {active:true,day:Math.floor((Date.now()-new Date(periodData.start+'T00:00:00'))/86400000)+1,intensity:periodData.intensity} : {active:false},
-    hadOutburst:!!ynState.outburst, outburstText:document.getElementById('outburstText').value, outburstTags:[].concat(sectionTags.outburst), outburstPeople:[].concat(sectionPeople.outburst),
-    hadControlled:!!ynState.controlled, controlledText:document.getElementById('controlledText').value, controlledTags:[].concat(sectionTags.controlled), controlledPeople:[].concat(sectionPeople.controlled),
-    hadInsta:!!ynState.insta, instaFeel:document.getElementById('instaFeel').value, instaTags:[].concat(sectionTags.insta), instaPeople:[].concat(sectionPeople.insta),
+    hadOutburst:!!ynState.outburst, outburstEntries:[].concat(behaviourEntries.outburst), outburstTags:allTags('outburst'), outburstPeople:allPeople('outburst'),
+    hadControlled:!!ynState.controlled, controlledEntries:[].concat(behaviourEntries.controlled), controlledTags:allTags('controlled'), controlledPeople:allPeople('controlled'),
+    hadInsta:!!ynState.insta, instaEntries:[].concat(behaviourEntries.insta), instaTags:allTags('insta'), instaPeople:allPeople('insta'),
     cannabis:!!subState.cannabis, cannabisEntries:[].concat(cannabisEntries),
     substances:subs,
     hadExercise:!!ynState.exercise, exerciseEntries:[].concat(exerciseEntries),
@@ -776,10 +845,24 @@ function openModal(ds) {
     var h='<div class="modal-section"><div class="modal-section-title">At a glance</div><div style="font-size:30px;letter-spacing:5px;">'+(e.symbols||[]).join('')+'</div></div>';
     if(e.lunar) h+=ms('🌙 Lunar',e.lunar.icon+' '+e.lunar.phase+'<br><small style="color:var(--text2);">'+e.lunar.paksha+' · '+e.lunar.tithiName+'</small>');
     if(e.period&&e.period.active) h+=ms('🔴 Period','Day '+e.period.day+(e.period.intensity?' · Intensity '+e.period.intensity+'/10':''));
-    if(e.hadOutburst){h+=ms('⚡ Outburst',e.outburstText);h+=mtags(e.outburstTags,e.outburstPeople);}
-    if(e.hadControlled){h+=ms('🌊 Controlled',e.controlledText);h+=mtags(e.controlledTags,e.controlledPeople);}
-    if(e.hadInsta){h+=ms('📱 Instagram',e.instaFeel);h+=mtags(e.instaTags,e.instaPeople);}
-    if(e.cannabis&&e.cannabisEntries&&e.cannabisEntries.length) h+=ms('🌿 Cannabis',e.cannabisEntries.map(function(c){return (c.time||'—')+' · '+c.qty+c.unit+' · '+c.form;}).join('<br>'));
+    // stacked behaviour entries
+    if(e.hadOutburst){
+      var entries=e.outburstEntries&&e.outburstEntries.length?e.outburstEntries:[{text:e.outburstText||'',tags:e.outburstTags||[],people:e.outburstPeople||[]}];
+      entries.forEach(function(en,i){ h+=ms('⚡ Outburst'+(entries.length>1?' '+(i+1):''),en.text);h+=mtags(en.tags,en.people); });
+    }
+    if(e.hadControlled){
+      var entries=e.controlledEntries&&e.controlledEntries.length?e.controlledEntries:[{text:e.controlledText||'',tags:e.controlledTags||[],people:e.controlledPeople||[]}];
+      entries.forEach(function(en,i){ h+=ms('🌊 Controlled'+(entries.length>1?' '+(i+1):''),en.text);h+=mtags(en.tags,en.people); });
+    }
+    if(e.hadInsta){
+      var entries=e.instaEntries&&e.instaEntries.length?e.instaEntries:[{text:e.instaFeel||'',tags:e.instaTags||[],people:e.instaPeople||[]}];
+      entries.forEach(function(en,i){ h+=ms('📱 Instagram'+(entries.length>1?' '+(i+1):''),en.text);h+=mtags(en.tags,en.people); });
+    }
+    if(e.cannabis&&e.cannabisEntries&&e.cannabisEntries.length) h+=ms('🌿 Cannabis',e.cannabisEntries.map(function(c){
+      if(c.form==='joint') return '🚬 Joint · '+(c.size||'medium')+(c.timeUntracked?' · time not tracked':c.time?' · '+c.time:'');
+      if(c.form==='edible') return '🍪 Edible · '+(c.dose?c.dose+'mg':'—')+(c.timeUntracked?' · time not tracked':c.time?' · '+c.time:'');
+      return (c.time||'—')+' · '+(c.qty||'')+' '+(c.unit||'')+' · '+(c.form||'');
+    }).join('<br>'));
     var sl=Object.entries(e.substances||{}).filter(function(kv){return kv[1].qty>0;}).map(function(kv){return kv[0]+': '+kv[1].qty+(kv[1].unit?' '+kv[1].unit:'');});
     if(sl.length) h+=ms('Other',sl.join(' · '));
     if(e.hadExercise&&e.exerciseEntries&&e.exerciseEntries.length) h+=ms('🏃 Exercise',e.exerciseEntries.map(function(x){return x.type+(x.duration?' ('+x.duration+')':'');}).join('<br>'));
@@ -835,9 +918,9 @@ function showToast(msg) {
 }
 function loadTodayIfExists() {
   var e=db[today()]; if(!e)return;
-  if(e.hadOutburst){setYN('outburst',true);document.getElementById('outburstText').value=e.outburstText||'';sectionTags.outburst=[].concat(e.outburstTags||[]);sectionPeople.outburst=[].concat(e.outburstPeople||[]);renderTagsAndPeople('outburst');}
-  if(e.hadControlled){setYN('controlled',true);document.getElementById('controlledText').value=e.controlledText||'';sectionTags.controlled=[].concat(e.controlledTags||[]);sectionPeople.controlled=[].concat(e.controlledPeople||[]);renderTagsAndPeople('controlled');}
-  if(e.hadInsta){setYN('insta',true);document.getElementById('instaFeel').value=e.instaFeel||'';sectionTags.insta=[].concat(e.instaTags||[]);sectionPeople.insta=[].concat(e.instaPeople||[]);renderTagsAndPeople('insta');}
+  if(e.hadOutburst){setYN('outburst',true);behaviourEntries.outburst=e.outburstEntries&&e.outburstEntries.length?[].concat(e.outburstEntries):[{text:e.outburstText||'',tags:[].concat(e.outburstTags||[]),people:[].concat(e.outburstPeople||[])}];renderBehaviourEntries('outburst');}
+  if(e.hadControlled){setYN('controlled',true);behaviourEntries.controlled=e.controlledEntries&&e.controlledEntries.length?[].concat(e.controlledEntries):[{text:e.controlledText||'',tags:[].concat(e.controlledTags||[]),people:[].concat(e.controlledPeople||[])}];renderBehaviourEntries('controlled');}
+  if(e.hadInsta){setYN('insta',true);behaviourEntries.insta=e.instaEntries&&e.instaEntries.length?[].concat(e.instaEntries):[{text:e.instaFeel||'',tags:[].concat(e.instaTags||[]),people:[].concat(e.instaPeople||[])}];renderBehaviourEntries('insta');}
   if(e.cannabis){setSubYN('cannabis',true);cannabisEntries=[].concat(e.cannabisEntries||[]);renderCannabisEntries();}
   if(e.hadExercise){setYN('exercise',true);exerciseEntries=[].concat(e.exerciseEntries||[]);renderExerciseEntries();}
   ['sugar','alcohol','chai','cig'].forEach(function(k){
