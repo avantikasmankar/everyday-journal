@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<title>Daily Recovery Log</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0f0f1a; --surface: #17172a; --surface2: #1e1e35;
+    --border: #2a2a45; --accent: #c084fc; --accent2: #818cf8;
+    --warn: #fb923c; --danger: #f87171; --muted: #6b7280;
+    --text: #e2e8f0; --text2: #94a3b8;
+    --serif: 'DM Serif Display', serif;
+    --sans: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+    --people: #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 15px; min-height: 100vh; }
+
+  .app { display: flex; flex-direction: column; min-height: 100vh; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; }
+  .header-title { font-family: var(--serif); font-size: 22px; color: var(--accent); }
+  .header-date { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  nav { display: flex; gap: 4px; padding: 12px 24px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .nav-btn { background: none; border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: var(--sans); font-size: 13px; transition: all 0.15s; }
+  .nav-btn.active, .nav-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { flex: 1; padding: 24px; max-width: 760px; margin: 0 auto; width: 100%; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .section-label { font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+
+  textarea, input[type="text"], input[type="number"], input[type="time"], select {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; font-family: var(--sans); font-size: 14px; width: 100%;
+    padding: 10px 12px; resize: vertical; transition: border-color 0.15s; outline: none;
+  }
+  textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+  textarea { min-height: 90px; }
+  select option { background: var(--surface2); }
+  label { display: block; font-size: 13px; color: var(--text2); margin-bottom: 5px; }
+  .field { margin-bottom: 14px; }
+
+  /* Yes/No buttons */
+  .yn-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .yn-label { font-size: 14px; color: var(--text); flex: 1; }
+  .yn-btns { display: flex; gap: 6px; }
+  .yn-btn {
+    padding: 5px 16px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); cursor: pointer;
+    font-size: 13px; font-family: var(--mono); transition: all 0.15s;
+  }
+  .yn-btn.yes-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .yn-btn.no-active { background: var(--surface2); border-color: var(--danger); color: var(--danger); }
+
+  /* Tags */
+  .tags-row { display: flex; gap: 12px; margin-top: 10px; }
+  .tags-col { flex: 1; }
+  .tags-col-label { font-size: 10px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .tag-area { display: flex; flex-wrap: wrap; gap: 5px; min-height: 28px; }
+  .tag {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text2); padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-family: var(--mono); cursor: pointer; transition: all 0.15s;
+  }
+  .tag.selected { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .tag.people-tag { border-color: var(--people); color: var(--people); }
+  .tag.people-tag.selected { background: var(--people); color: #000; }
+  .tag-input-row { display: flex; gap: 8px; margin-top: 8px; }
+  .tag-input-row input { flex: 1; }
+  .tag-add-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--accent); padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 13px; white-space: nowrap; transition: all 0.15s; }
+  .tag-add-btn:hover { background: var(--accent); color: #fff; }
+
+  /* Lunar */
+  .lunar-display { display: flex; align-items: center; gap: 16px; padding: 12px 16px; background: var(--surface2); border-radius: 8px; }
+  .lunar-icon { font-size: 36px; line-height: 1; }
+  .lunar-phase-name { font-family: var(--serif); font-size: 18px; color: var(--accent); }
+  .lunar-tithi { font-size: 13px; color: var(--text); margin-top: 4px; }
+  .lunar-detail { font-size: 12px; color: var(--text2); margin-top: 3px; font-family: var(--mono); }
+
+  /* Period */
+  .period-intensity { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  .period-intensity-label { font-size: 13px; color: var(--text2); }
+  .intensity-btns { display: flex; gap: 4px; }
+  .int-btn {
+    width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); cursor: pointer;
+    font-size: 12px; font-family: var(--mono); transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .int-btn.active { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .period-status { font-size: 12px; color: var(--text2); margin-top: 8px; font-family: var(--mono); }
+
+  /* Cannabis entries */
+  .cannabis-entry { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+  .cannabis-entry-grid { display: grid; grid-template-columns: 70px 1fr 1fr 1fr 24px; gap: 8px; align-items: center; }
+
+  /* Substance block */
+  .sub-block { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .sub-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .sub-detail { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  /* Submit */
+  .submit-btn { width: 100%; padding: 14px; border-radius: 10px; background: var(--accent); border: none; color: #fff; font-family: var(--serif); font-size: 18px; cursor: pointer; transition: opacity 0.15s; margin-top: 8px; }
+  .submit-btn:hover { opacity: 0.85; }
+
+  /* Calendar */
+  .cal-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .cal-controls button { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+  .cal-title { font-family: var(--serif); font-size: 20px; color: var(--accent); flex: 1; }
+  .vt-btn { background: none; border: 1px solid var(--border); color: var(--text2); padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: var(--mono); }
+  .vt-btn.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-dow { text-align: center; font-size: 10px; font-family: var(--mono); color: var(--muted); padding: 4px 0; text-transform: uppercase; }
+  .cal-day { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 4px; min-height: 80px; cursor: pointer; transition: border-color 0.15s; }
+  .cal-day:hover { border-color: var(--accent); }
+  .cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
+  .cal-day.today { border-color: var(--accent); }
+  .cal-day-num { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: 4px; }
+  .cal-day.today .cal-day-num { color: var(--accent); font-weight: 600; }
+  .cal-syms { display: flex; flex-wrap: wrap; gap: 2px; font-size: 13px; }
+  .week-grid { display: flex; flex-direction: column; gap: 6px; }
+  .week-row { display: grid; grid-template-columns: 100px 1fr; gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; cursor: pointer; transition: border-color 0.15s; }
+  .week-row:hover { border-color: var(--accent); }
+  .week-date { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .week-syms { font-size: 18px; letter-spacing: 3px; }
+  .week-keywords { font-size: 11px; color: var(--text2); font-family: var(--mono); margin-top: 4px; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; max-width: 560px; width: 100%; max-height: 80vh; overflow-y: auto; padding: 24px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-title { font-family: var(--serif); font-size: 22px; color: var(--accent); }
+  .modal-close { background: none; border: none; color: var(--text2); font-size: 22px; cursor: pointer; }
+  .modal-section { margin-bottom: 16px; }
+  .modal-section-title { font-size: 11px; font-family: var(--mono); color: var(--accent2); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .modal-text { font-size: 14px; color: var(--text); line-height: 1.6; }
+  .modal-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .modal-tag { background: var(--surface2); border: 1px solid var(--border); color: var(--accent); padding: 2px 8px; border-radius: 12px; font-size: 11px; font-family: var(--mono); }
+  .modal-tag.people { border-color: var(--people); color: var(--people); }
+
+  /* Patterns */
+  .pattern-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .pattern-title { font-family: var(--serif); font-size: 18px; color: var(--accent); margin-bottom: 14px; }
+  .keyword-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+  .keyword-chip { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 4px 12px; border-radius: 20px; font-family: var(--mono); font-size: 12px; display: flex; gap: 6px; align-items: center; }
+  .keyword-count { background: var(--accent); color: #fff; border-radius: 10px; padding: 1px 6px; font-size: 10px; }
+  .keyword-chip.people-chip { border-color: var(--people); }
+  .keyword-chip.people-chip .keyword-count { background: var(--people); color: #000; }
+  .pattern-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .pattern-row:last-child { border-bottom: none; }
+  .pattern-row-label { font-size: 13px; color: var(--text2); }
+  .pattern-row-val { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+
+  /* AI thinking */
+  .ai-thinking { display: none; align-items: center; gap: 8px; padding: 8px 12px; background: var(--surface2); border-radius: 8px; margin-top: 8px; font-size: 12px; color: var(--text2); font-family: var(--mono); }
+  .ai-thinking.show { display: flex; }
+  .dot-pulse { display: flex; gap: 4px; }
+  .dot-pulse span { width: 5px; height: 5px; background: var(--accent); border-radius: 50%; animation: pulse 1.2s infinite; }
+  .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { 0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)} }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--accent); color: var(--text); padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 300; transform: translateY(60px); opacity: 0; transition: all 0.3s; pointer-events: none; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* API gate */
+  .api-gate { display: none; position: fixed; inset: 0; background: var(--bg); z-index: 500; align-items: center; justify-content: center; padding: 24px; }
+  .api-gate.show { display: flex; }
+  .api-gate-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; max-width: 440px; width: 100%; padding: 32px; text-align: center; }
+  .api-gate-icon { font-size: 48px; margin-bottom: 16px; }
+  .api-gate-title { font-family: var(--serif); font-size: 26px; color: var(--accent); margin-bottom: 10px; }
+  .api-gate-sub { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 24px; }
+  .api-gate-input { margin-bottom: 14px; }
+  .api-gate-btn { width: 100%; padding: 12px; background: var(--accent); border: none; color: #fff; border-radius: 10px; font-family: var(--serif); font-size: 17px; cursor: pointer; }
+  .api-gate-skip { margin-top: 12px; font-size: 12px; color: var(--muted); cursor: pointer; text-decoration: underline; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="api-gate show" id="apiGate">
+  <div class="api-gate-box">
+    <div class="api-gate-icon">🔑</div>
+    <div class="api-gate-title">Daily Recovery Log</div>
+    <div class="api-gate-sub">This app uses Claude to extract keywords from your entries. Paste your Anthropic API key — it stays on your device and is only sent to Anthropic's servers.</div>
+    <div class="api-gate-input"><input type="text" id="apiKeyInput" placeholder="sk-ant-…" style="text-align:center;" /></div>
+    <button class="api-gate-btn" onclick="saveApiKey()">Save & Continue</button>
+    <div class="api-gate-skip" onclick="skipApiKey()">Skip — use manual tags only</div>
+  </div>
+</div>
+
+<div class="app" id="appShell" style="display:none;">
+  <header>
+    <div class="header-title">Recovery Log</div>
+    <div class="header-date" id="headerDate"></div>
+  </header>
+  <nav>
+    <button class="nav-btn active" onclick="showPanel('log',this)">Log Today</button>
+    <button class="nav-btn" onclick="showPanel('calendar',this)">Calendar</button>
+    <button class="nav-btn" onclick="showPanel('patterns',this)">Patterns</button>
+  </nav>
+  <main>
+
+    <!-- ══ LOG PANEL ══ -->
+    <div class="panel active" id="panel-log">
+
+      <!-- Lunar -->
+      <div class="section-card">
+        <div class="section-label">🌙 Lunar Phase</div>
+        <div class="lunar-display">
+          <div class="lunar-icon" id="lunarIcon">⏳</div>
+          <div>
+            <div class="lunar-phase-name" id="lunarPhaseName">Loading…</div>
+            <div class="lunar-tithi" id="lunarTithi"></div>
+            <div class="lunar-detail" id="lunarDetail"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Period -->
+      <div class="section-card">
+        <div class="section-label">🔴 Menstrual Cycle</div>
+        <div class="yn-row">
+          <span class="yn-label">Am I on my period today?</span>
+          <div class="yn-btns">
+            <button class="yn-btn" id="period-yes" onclick="setPeriod(true)">Yes</button>
+            <button class="yn-btn" id="period-no" onclick="setPeriod(false)">No</button>
+          </div>
+        </div>
+        <div id="periodDetail" style="display:none;">
+          <div class="period-intensity">
+            <span class="period-intensity-label">Flow intensity (1–10):</span>
+            <div class="intensity-btns" id="intensityBtns"></div>
+          </div>
+          <div class="period-status" id="periodStatus"></div>
+        </div>
+      </div>
+
+      <!-- Outbursts -->
+      <div class="section-card">
+        <div class="section-label">⚡ Outbursts</div>
+        <div class="yn-row">
+          <span class="yn-label">Did I have an outburst today?</span>
+          <div class="yn-btns">
+            <button class="yn-btn" id="outburst-yes" onclick="setYN('outburst',true)">Yes</button>
+            <button class="yn-btn" id="outburst-no" onclick="setYN('outburst',false)">No</button>
+          </div>
+        </div>
+        <div id="outburstDetail" style="display:none;">
+          <div class="field">
+            <label>What happened?</label>
+            <textarea id="outburstText" placeholder="Free write — what happened, who was involved, what you felt…" oninput="scheduleExtract('outburst')"></textarea>
+          </div>
+          <div class="ai-thinking" id="thinking-outburst"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing…</div>
+          <div class="tags-row">
+            <div class="tags-col">
+              <div class="tags-col-label">Keywords</div>
+              <div class="tag-area" id="tags-outburst"></div>
+              <div class="tag-input-row">
+                <input type="text" id="manualTag-outburst" placeholder="Add keyword…" onkeydown="if(event.key==='Enter')addManualTag('outburst','kw')">
+                <button class="tag-add-btn" onclick="addManualTag('outburst','kw')">+ Tag</button>
+              </div>
+            </div>
+            <div class="tags-col">
+              <div class="tags-col-label" style="color:var(--people);">People</div>
+              <div class="tag-area" id="people-outburst"></div>
+              <div class="tag-input-row">
+                <input type="text" id="manualPerson-outburst" placeholder="Add name…" onkeydown="if(event.key==='Enter')addManualTag('outburst','person')">
+                <button class="tag-add-btn" style="color:var(--people);" onclick="addManualTag('outburst','person')">+ Name</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controlled outbursts -->
+      <div class="section-card">
+        <div class="section-label">🌊 Controlled Outbursts</div>
+        <div class="yn-row">
+          <span class="yn-label">Did I catch myself before acting?</span>
+          <div class="yn-btns">
+            <button class="yn-btn" id="controlled-yes" onclick="setYN('controlled',true)">Yes</button>
+            <button class="yn-btn" id="controlled-no" onclick="setYN('controlled',false)">No</button>
+          </div>
+        </div>
+        <div id="controlledDetail" style="display:none;">
+          <div class="field">
+            <label>What did you feel the urge to do? What did you do instead?</label>
+            <textarea id="controlledText" placeholder="e.g. wanted to send a voice note but didn't, wrote a message and deleted it…" oninput="scheduleExtract('controlled')"></textarea>
+          </div>
+          <div class="ai-thinking" id="thinking-controlled"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing…</div>
+          <div class="tags-row">
+            <div class="tags-col">
+              <div class="tags-col-label">Keywords</div>
+              <div class="tag-area" id="tags-controlled"></div>
+              <div class="tag-input-row">
+                <input type="text" id="manualTag-controlled" placeholder="Add keyword…" onkeydown="if(event.key==='Enter')addManualTag('controlled','kw')">
+                <button class="tag-add-btn" onclick="addManualTag('controlled','kw')">+ Tag</button>
+              </div>
+            </div>
+            <div class="tags-col">
+              <div class="tags-col-label" style="color:var(--people);">People</div>
+              <div class="tag-area" id="people-controlled"></div>
+              <div class="tag-input-row">
+                <input type="text" id="manualPerson-controlled" placeholder="Add name…" onkeydown="if(event.key==='Enter')addManualTag('controlled','person')">
+                <button class="tag-add-btn" style="color:var(--people);" onclick="addManualTag('controlled','person')">+ Name</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Instagram -->
+      <div class="section-card">
+        <div class="section-label">📱 Instagram</div>
+        <div class="yn-row">
+          <span class="yn-label">Did I stalk anyone today?</span>
+          <div class="yn-btns">
+            <button class="yn-btn" id="insta-yes" onclick="setYN('insta',true)">Yes</button>
+            <button class="yn-btn" id="insta-no" onclick="setYN('insta',false)">No</button>
+          </div>
+        </div>
+        <div id="instaDetail" style="display:none;">
+          <div class="field">
+            <label>How did it feel?</label>
+            <textarea id="instaFeel" placeholder="What came up — emotionally, in your body…" oninput="scheduleExtract('insta')"></textarea>
+          </div>
+          <div class="ai-thinking" id="thinking-insta"><div class="dot-pulse"><span></span><span></span><span></span></div> Analysing…</div>
+          <div class="tags-row">
+            <div class="tags-col">
+              <div class="tags-col-label">Keywords</div>
+              <div class="tag-area" id="tags-insta"></div>
+              <div class="tag-input-row">
+                <input type="text" id="manualTag-insta" placeholder="Add keyword…" onkeydown="if(event.key==='Enter')addManualTag('insta','kw')">
+                <button class="tag-add-btn" onclick="addManualTag('insta','kw')">+ Tag</button>
+              </div>
+            </div>
+            <div class="tags-col">
+              <div class="tags-col-label" style="color:var(--people);">Who</div>
+              <div class="tag-area" id="people-insta"></div>
+              <div class="tag-input-row">
+                <input type="text" id="manualPerson-insta" placeholder="Add name…" onkeydown="if(event.key==='Enter')addManualTag('insta','person')">
+                <button class="tag-add-btn" style="color:var(--people);" onclick="addManualTag('insta','person')">+ Name</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Substances -->
+      <div class="section-card">
+        <div class="section-label">🌿 Substances</div>
+
+        <!-- Cannabis -->
+        <div class="sub-block">
+          <div class="yn-row" style="margin-bottom:0;">
+            <span class="yn-label">🌿 Cannabis</span>
+            <div class="yn-btns">
+              <button class="yn-btn" id="cannabis-yes" onclick="setSubYN('cannabis',true)">Yes</button>
+              <button class="yn-btn" id="cannabis-no" onclick="setSubYN('cannabis',false)">No</button>
+            </div>
+          </div>
+          <div id="cannabisDetail" style="display:none; margin-top:12px;">
+            <div id="cannabisEntries"></div>
+            <button class="tag-add-btn" onclick="addCannabisEntry()" style="margin-top:4px;">+ Add use</button>
+          </div>
+        </div>
+
+        <!-- Sugar -->
+        <div class="sub-block">
+          <div class="yn-row" style="margin-bottom:0;">
+            <span class="yn-label">🍬 Sugar / sweets</span>
+            <div class="yn-btns">
+              <button class="yn-btn" id="sugar-yes" onclick="setSubYN('sugar',true)">Yes</button>
+              <button class="yn-btn" id="sugar-no" onclick="setSubYN('sugar',false)">No</button>
+            </div>
+          </div>
+          <div id="sugarDetail" style="display:none; margin-top:10px;">
+            <div class="sub-detail">
+              <div><label>Quantity</label><input type="number" min="0" id="sugar-qty" placeholder="0" /></div>
+              <div><label>Unit</label><select id="sugar-unit"><option>servings</option><option>pieces</option><option>g</option></select></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alcohol -->
+        <div class="sub-block">
+          <div class="yn-row" style="margin-bottom:0;">
+            <span class="yn-label">🍷 Alcohol</span>
+            <div class="yn-btns">
+              <button class="yn-btn" id="alcohol-yes" onclick="setSubYN('alcohol',true)">Yes</button>
+              <button class="yn-btn" id="alcohol-no" onclick="setSubYN('alcohol',false)">No</button>
+            </div>
+          </div>
+          <div id="alcoholDetail" style="display:none; margin-top:10px;">
+            <div class="sub-detail">
+              <div><label>Quantity</label><input type="number" min="0" id="alcohol-qty" placeholder="0" /></div>
+              <div><label>Unit</label><select id="alcohol-unit"><option>drinks</option><option>units</option><option>ml</option></select></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chai -->
+        <div class="sub-block">
+          <div class="yn-row" style="margin-bottom:0;">
+            <span class="yn-label">☕ Chai</span>
+            <div class="yn-btns">
+              <button class="yn-btn" id="chai-yes" onclick="setSubYN('chai',true)">Yes</button>
+              <button class="yn-btn" id="chai-no" onclick="setSubYN('chai',false)">No</button>
+            </div>
+          </div>
+          <div id="chaiDetail" style="display:none; margin-top:10px;">
+            <div class="sub-detail">
+              <div><label>Cups</label><input type="number" min="0" id="chai-qty" placeholder="0" /></div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cigarettes -->
+        <div class="sub-block">
+          <div class="yn-row" style="margin-bottom:0;">
+            <span class="yn-label">🚬 Cigarettes</span>
+            <div class="yn-btns">
+              <button class="yn-btn" id="cig-yes" onclick="setSubYN('cig',true)">Yes</button>
+              <button class="yn-btn" id="cig-no" onclick="setSubYN('cig',false)">No</button>
+            </div>
+          </div>
+          <div id="cigDetail" style="display:none; margin-top:10px;">
+            <div class="sub-detail">
+              <div><label>Quantity</label><input type="number" min="0" id="cig-qty" placeholder="0" /></div>
+              <div><label>Type</label><select id="cig-unit"><option>cigarettes</option><option>beedis</option></select></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Exercise -->
+      <div class="section-card">
+        <div class="section-label">🏃 Exercise</div>
+        <div class="yn-row">
+          <span class="yn-label">Did I exercise today?</span>
+          <div class="yn-btns">
+            <button class="yn-btn" id="exercise-yes" onclick="setYN('exercise',true)">Yes</button>
+            <button class="yn-btn" id="exercise-no" onclick="setYN('exercise',false)">No</button>
+          </div>
+        </div>
+        <div id="exerciseDetail" style="display:none;">
+          <div id="exerciseEntries"></div>
+          <button class="tag-add-btn" onclick="addExerciseEntry()" style="margin-top:4px;">+ Add activity</button>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="saveDay()">Save Today's Log</button>
+    </div>
+
+    <!-- ══ CALENDAR PANEL ══ -->
+    <div class="panel" id="panel-calendar">
+      <div class="cal-controls">
+        <button onclick="calNav(-1)">‹</button>
+        <div class="cal-title" id="calTitle"></div>
+        <button onclick="calNav(1)">›</button>
+        <div style="display:flex;gap:6px;">
+          <button class="vt-btn active" id="vt-month" onclick="setCalView('month',this)">Month</button>
+          <button class="vt-btn" id="vt-week" onclick="setCalView('week',this)">Week</button>
+        </div>
+      </div>
+      <div id="calBody"></div>
+    </div>
+
+    <!-- ══ PATTERNS PANEL ══ -->
+    <div class="panel" id="panel-patterns">
+      <div class="pattern-card">
+        <div class="pattern-title">All Keywords</div>
+        <div class="keyword-cloud" id="allKeywords"></div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-title" style="color:var(--people);">People Named</div>
+        <div class="keyword-cloud" id="allPeople"></div>
+      </div>
+      <div class="pattern-card">
+        <div class="pattern-title">Stats</div>
+        <div id="statsBody"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── API ──
+let API_KEY = localStorage.getItem('rl_api_key') || '';
+let skipApi = localStorage.getItem('rl_skip_api') === 'true';
+
+const DB_KEY = 'recovery_log_v3';
+let db = JSON.parse(localStorage.getItem(DB_KEY) || '{}');
+let periodData = JSON.parse(localStorage.getItem('rl_period') || '{"active":false,"start":null,"intensity":null,"history":[]}');
+
+function saveDb() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+function savePeriod() { localStorage.setItem('rl_period', JSON.stringify(periodData)); }
+
+const today = () => new Date().toISOString().slice(0,10);
+const fmtDate = d => new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+window.onload = () => {
+  if (API_KEY || skipApi) { launch(); }
+  else { document.getElementById('apiGate').classList.add('show'); }
+};
+
+function saveApiKey() {
+  const k = document.getElementById('apiKeyInput').value.trim();
+  if (!k.startsWith('sk-ant-')) { showToast('That doesn\'t look like an Anthropic key.'); return; }
+  API_KEY = k; localStorage.setItem('rl_api_key', k);
+  document.getElementById('apiGate').classList.remove('show');
+  launch();
+}
+function skipApiKey() {
+  skipApi = true; localStorage.setItem('rl_skip_api','true');
+  document.getElementById('apiGate').classList.remove('show');
+  launch();
+}
+
+function launch() {
+  document.getElementById('appShell').style.display = 'flex';
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  loadLunar();
+  buildIntensityBtns();
+  updatePeriodUI();
+  renderCalendar();
+  renderPatterns();
+  loadTodayIfExists();
+}
+
+// ── LUNAR (IST mathematical) ──
+function getLunarIST() {
+  const istOffset = 5.5 * 3600000;
+  const ist = new Date(Date.now() + istOffset);
+  const refNewMoon = new Date('2025-01-29T01:36:00Z');
+  const synodicMonth = 29.53058867;
+  const elapsed = (ist - refNewMoon) / 86400000;
+  const cyclePos = ((elapsed % synodicMonth) + synodicMonth) % synodicMonth;
+  const pct = cyclePos / synodicMonth;
+  const tithiNum = Math.floor(pct * 30) + 1;
+  const paksha = tithiNum <= 15 ? 'Shukla Paksha' : 'Krishna Paksha';
+  const tip = tithiNum <= 15 ? tithiNum : tithiNum - 15;
+  const tithiNames = ['Pratipada','Dwitiya','Tritiya','Chaturthi','Panchami','Shashthi','Saptami','Ashtami','Navami','Dashami','Ekadashi','Dwadashi','Trayodashi','Chaturdashi','Purnima / Amavasya'];
+  const tithiName = tithiNames[Math.min(tip-1,14)];
+  let icon, phase;
+  if (pct<.025){icon='🌑';phase='Amavasya (New Moon)';}
+  else if(pct<.25){icon='🌒';phase='Waxing Crescent';}
+  else if(pct<.275){icon='🌓';phase='First Quarter';}
+  else if(pct<.475){icon='🌔';phase='Waxing Gibbous';}
+  else if(pct<.525){icon='🌕';phase='Purnima (Full Moon)';}
+  else if(pct<.725){icon='🌖';phase='Waning Gibbous';}
+  else if(pct<.775){icon='🌗';phase='Last Quarter';}
+  else if(pct<.975){icon='🌘';phase='Waning Crescent';}
+  else{icon='🌑';phase='Amavasya (New Moon)';}
+  return { icon, phase, paksha, tithiName, tip, day: Math.round(cyclePos*10)/10 };
+}
+
+function loadLunar() {
+  const d = getLunarIST();
+  document.getElementById('lunarIcon').textContent = d.icon;
+  document.getElementById('lunarPhaseName').textContent = d.phase;
+  document.getElementById('lunarTithi').textContent = `${d.paksha} · ${d.tithiName} (${d.tip})`;
+  document.getElementById('lunarDetail').textContent = `Day ${d.day} of cycle · IST`;
+}
+
+// ── PERIOD ──
+function buildIntensityBtns() {
+  const c = document.getElementById('intensityBtns');
+  c.innerHTML = Array.from({length:10},(_,i)=>`<button class="int-btn" data-v="${i+1}" onclick="setIntensity(${i+1})">${i+1}</button>`).join('');
+}
+function setIntensity(v) {
+  periodData.intensity = v;
+  savePeriod();
+  document.querySelectorAll('.int-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.v)===v));
+}
+function setPeriod(val) {
+  const t = today();
+  document.getElementById('period-yes').classList.toggle('yes-active', val);
+  document.getElementById('period-no').classList.toggle('no-active', !val);
+  document.getElementById('periodDetail').style.display = val ? 'block' : 'none';
+  if (val && !periodData.active) {
+    periodData.active = true; periodData.start = t;
+    periodData.history.push({start:t,end:null});
+    savePeriod();
+  } else if (!val && periodData.active) {
+    periodData.active = false;
+    if (periodData.history.length) periodData.history[periodData.history.length-1].end = t;
+    savePeriod();
+  }
+  updatePeriodStatus();
+}
+function updatePeriodStatus() {
+  const el = document.getElementById('periodStatus');
+  if (periodData.active && periodData.start) {
+    const dayNum = Math.floor((Date.now() - new Date(periodData.start+'T00:00:00')) / 86400000) + 1;
+    el.textContent = `Day ${dayNum} · Started ${fmtDate(periodData.start)}`;
+  } else { el.textContent = ''; }
+  if (periodData.intensity) {
+    document.querySelectorAll('.int-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.v)===periodData.intensity));
+  }
+}
+function updatePeriodUI() {
+  if (periodData.active) {
+    document.getElementById('period-yes').classList.add('yes-active');
+    document.getElementById('periodDetail').style.display = 'block';
+    updatePeriodStatus();
+  }
+}
+
+// ── YES/NO state ──
+const ynState = {};
+function setYN(key, val) {
+  ynState[key] = val;
+  document.getElementById(`${key}-yes`).classList.toggle('yes-active', val);
+  document.getElementById(`${key}-no`).classList.toggle('no-active', !val);
+  const det = document.getElementById(`${key}Detail`);
+  if (det) det.style.display = val ? 'block' : 'none';
+}
+
+// ── SUBSTANCE YES/NO ──
+const subState = {};
+function setSubYN(key, val) {
+  subState[key] = val;
+  document.getElementById(`${key}-yes`).classList.toggle('yes-active', val);
+  document.getElementById(`${key}-no`).classList.toggle('no-active', !val);
+  const det = document.getElementById(`${key}Detail`);
+  if (det) det.style.display = val ? 'block' : 'none';
+}
+
+// ── TAGS & PEOPLE ──
+const sectionTags = { outburst:[], controlled:[], insta:[] };
+const sectionPeople = { outburst:[], controlled:[], insta:[] };
+const extractTimers = {};
+
+function addManualTag(section, type) {
+  const isP = type === 'person';
+  const inp = document.getElementById(isP ? `manualPerson-${section}` : `manualTag-${section}`);
+  const val = inp.value.trim();
+  if (!val) return;
+  const arr = isP ? sectionPeople[section] : sectionTags[section];
+  if (!arr.includes(val)) { arr.push(val); renderTagsAndPeople(section); }
+  inp.value = '';
+}
+
+function removeTag(section, type, val) {
+  const arr = type==='person' ? sectionPeople[section] : sectionTags[section];
+  const i = arr.indexOf(val);
+  if (i>-1) arr.splice(i,1);
+  renderTagsAndPeople(section);
+}
+
+function renderTagsAndPeople(section) {
+  const ta = document.getElementById(`tags-${section}`);
+  const pa = document.getElementById(`people-${section}`);
+  if (ta) ta.innerHTML = sectionTags[section].map(t=>`<span class="tag selected" onclick="removeTag('${section}','kw','${esc(t)}')">✕ ${t}</span>`).join('');
+  if (pa) pa.innerHTML = sectionPeople[section].map(t=>`<span class="tag people-tag selected" onclick="removeTag('${section}','person','${esc(t)}')">✕ ${t}</span>`).join('');
+}
+
+function esc(s) { return s.replace(/'/g,"\\'"); }
+
+function scheduleExtract(section) {
+  if (!API_KEY) return;
+  clearTimeout(extractTimers[section]);
+  extractTimers[section] = setTimeout(()=>extractKeywords(section), 1400);
+}
+
+async function extractKeywords(section) {
+  let text = '';
+  if (section==='outburst') text = document.getElementById('outburstText').value;
+  if (section==='controlled') text = document.getElementById('controlledText').value;
+  if (section==='insta') text = document.getElementById('instaFeel').value;
+  if (text.length < 20) return;
+
+  document.getElementById(`thinking-${section}`).classList.add('show');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':API_KEY,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:300,
+        messages:[{role:'user',content:`Analyse this personal journal entry. Return ONLY a JSON object with two arrays — no preamble, no markdown:\n{"keywords":["emotion or dynamic or trigger (2-3 words max)"],"people":["first names or pronouns used for specific people"]}\n\nExtract 4-8 keywords focused on emotional patterns, dynamics, and triggers. Extract any names of specific people mentioned (first name only).\n\nEntry: "${text}"`}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '{}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    (parsed.keywords||[]).forEach(k=>{ if(!sectionTags[section].includes(k)) sectionTags[section].push(k); });
+    (parsed.people||[]).forEach(p=>{ if(!sectionPeople[section].includes(p)) sectionPeople[section].push(p); });
+    renderTagsAndPeople(section);
+  } catch(e) { console.error(e); }
+  document.getElementById(`thinking-${section}`).classList.remove('show');
+}
+
+// ── CANNABIS ──
+let cannabisEntries = [];
+function addCannabisEntry() {
+  cannabisEntries.push({time:'',qty:'',unit:'g',form:'joint'});
+  renderCannabisEntries();
+}
+function removeCannabisEntry(i) { cannabisEntries.splice(i,1); renderCannabisEntries(); }
+function renderCannabisEntries() {
+  document.getElementById('cannabisEntries').innerHTML = cannabisEntries.map((e,i)=>`
+    <div class="cannabis-entry">
+      <div class="cannabis-entry-grid">
+        <div><label style="font-size:11px;">Time</label><input type="time" value="${e.time}" onchange="cannabisEntries[${i}].time=this.value" /></div>
+        <div><label style="font-size:11px;">Quantity</label><input type="number" min="0" placeholder="0" value="${e.qty}" onchange="cannabisEntries[${i}].qty=this.value" /></div>
+        <div><label style="font-size:11px;">Unit</label>
+          <select onchange="cannabisEntries[${i}].unit=this.value">
+            <option ${e.unit==='g'?'selected':''}>g</option>
+            <option ${e.unit==='mg'?'selected':''}>mg</option>
+            <option ${e.unit==='hits'?'selected':''}>hits</option>
+          </select>
+        </div>
+        <div><label style="font-size:11px;">Form</label>
+          <select onchange="cannabisEntries[${i}].form=this.value">
+            <option value="joint" ${e.form==='joint'?'selected':''}>Joint</option>
+            <option value="pill" ${e.form==='pill'?'selected':''}>Pill / Edible</option>
+            <option value="vape" ${e.form==='vape'?'selected':''}>Vape</option>
+            <option value="chillum" ${e.form==='chillum'?'selected':''}>Chillum</option>
+          </select>
+        </div>
+        <button onclick="removeCannabisEntry(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;align-self:flex-end;padding-bottom:8px;">×</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── EXERCISE ──
+let exerciseEntries = [];
+function addExerciseEntry() { exerciseEntries.push({type:'',duration:''}); renderExerciseEntries(); }
+function removeExerciseEntry(i) { exerciseEntries.splice(i,1); renderExerciseEntries(); }
+function renderExerciseEntries() {
+  document.getElementById('exerciseEntries').innerHTML = exerciseEntries.map((e,i)=>`
+    <div style="display:grid;grid-template-columns:1fr 100px 24px;gap:8px;align-items:end;margin-bottom:8px;">
+      <div><label style="font-size:11px;">Activity</label><input type="text" placeholder="swimming, aerial, running…" value="${e.type}" onchange="exerciseEntries[${i}].type=this.value" /></div>
+      <div><label style="font-size:11px;">Duration</label><input type="text" placeholder="45 min" value="${e.duration}" onchange="exerciseEntries[${i}].duration=this.value" /></div>
+      <button onclick="removeExerciseEntry(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding-bottom:10px;">×</button>
+    </div>
+  `).join('');
+}
+
+// ── SAVE ──
+function buildSymbols(e) {
+  const l = getLunarIST();
+  const s = [l.icon];
+  if (e.period?.active) s.push('🔴');
+  if (e.hadOutburst) s.push('⚡');
+  if (e.hadControlled) s.push('🌊');
+  if (e.hadInsta) s.push('📱');
+  if (e.cannabis) s.push('🌿');
+  if (e.substances?.alcohol) s.push('🍷');
+  if (e.substances?.sugar) s.push('🍬');
+  if (e.substances?.chai) s.push('☕');
+  if (e.substances?.cig) s.push('🚬');
+  if (e.hadExercise) s.push('🏃');
+  return s;
+}
+
+function saveDay() {
+  const l = getLunarIST();
+  const subs = {};
+  ['sugar','alcohol','chai','cig'].forEach(k => {
+    if (subState[k]) subs[k] = { qty: parseFloat(document.getElementById(`${k}-qty`)?.value||0)||0, unit: document.getElementById(`${k}-unit`)?.value||'' };
+  });
+
+  const entry = {
+    date: today(), lunar: l,
+    period: periodData.active ? {active:true, day: Math.floor((Date.now()-new Date(periodData.start+'T00:00:00'))/86400000)+1, intensity: periodData.intensity} : {active:false},
+    hadOutburst: !!ynState.outburst,
+    outburstText: document.getElementById('outburstText').value,
+    outburstTags: [...sectionTags.outburst],
+    outburstPeople: [...sectionPeople.outburst],
+    hadControlled: !!ynState.controlled,
+    controlledText: document.getElementById('controlledText').value,
+    controlledTags: [...sectionTags.controlled],
+    controlledPeople: [...sectionPeople.controlled],
+    hadInsta: !!ynState.insta,
+    instaFeel: document.getElementById('instaFeel').value,
+    instaTags: [...sectionTags.insta],
+    instaPeople: [...sectionPeople.insta],
+    cannabis: !!subState.cannabis,
+    cannabisEntries: [...cannabisEntries],
+    substances: subs,
+    hadExercise: !!ynState.exercise,
+    exerciseEntries: [...exerciseEntries],
+    savedAt: new Date().toISOString()
+  };
+  entry.symbols = buildSymbols(entry);
+  db[today()] = entry;
+  saveDb();
+  showToast('Saved ✓');
+  renderCalendar();
+  renderPatterns();
+}
+
+// ── CALENDAR ──
+let calDate = new Date(), calView = 'month';
+function calNav(d) {
+  if (calView==='month') calDate.setMonth(calDate.getMonth()+d);
+  else calDate.setDate(calDate.getDate()+d*7);
+  renderCalendar();
+}
+function setCalView(v,btn) {
+  calView=v;
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCalendar();
+}
+function renderCalendar() {
+  if (!document.getElementById('calBody')) return;
+  calView==='month' ? renderMonth() : renderWeek();
+}
+function renderMonth() {
+  const y=calDate.getFullYear(),m=calDate.getMonth();
+  const months=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calTitle').textContent=`${months[m]} ${y}`;
+  const first=new Date(y,m,1).getDay(), days=new Date(y,m+1,0).getDate(), td=today();
+  let h=`<div class="cal-grid">`;
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d=>h+=`<div class="cal-dow">${d}</div>`);
+  for(let i=0;i<first;i++) h+=`<div class="cal-day empty"></div>`;
+  for(let d=1;d<=days;d++) {
+    const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const e=db[ds]; const syms=(e?.symbols||[]).join('');
+    h+=`<div class="cal-day${ds===td?' today':''}" onclick="openModal('${ds}')"><div class="cal-day-num">${d}</div><div class="cal-syms">${syms}</div></div>`;
+  }
+  h+=`</div>`;
+  document.getElementById('calBody').innerHTML=h;
+}
+function renderWeek() {
+  const s=new Date(calDate); s.setDate(s.getDate()-s.getDay());
+  const dates=Array.from({length:7},(_,i)=>{const d=new Date(s);d.setDate(s.getDate()+i);return d;});
+  document.getElementById('calTitle').textContent=`${dates[0].toLocaleDateString('en-IN',{day:'numeric',month:'short'})} – ${dates[6].toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})}`;
+  let h=`<div class="week-grid">`;
+  dates.forEach(d=>{
+    const ds=d.toISOString().slice(0,10), e=db[ds];
+    const syms=(e?.symbols||[]).join('');
+    const kw=[...(e?.outburstTags||[]),...(e?.controlledTags||[]),...(e?.instaTags||[])].slice(0,5).join(' · ');
+    const people=[...(e?.outburstPeople||[]),...(e?.controlledPeople||[]),...(e?.instaPeople||[])].slice(0,4).join(', ');
+    h+=`<div class="week-row" onclick="openModal('${ds}')">
+      <div class="week-date">${d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})}</div>
+      <div>
+        <div class="week-syms">${syms||'—'}</div>
+        ${kw?`<div class="week-keywords">${kw}</div>`:''}
+        ${people?`<div class="week-keywords" style="color:var(--people);">${people}</div>`:''}
+      </div>
+    </div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('calBody').innerHTML=h;
+}
+
+// ── MODAL ──
+function openModal(ds) {
+  const e=db[ds];
+  document.getElementById('modalTitle').textContent=fmtDate(ds);
+  if (!e) { document.getElementById('modalBody').innerHTML=`<p style="color:var(--muted);font-size:14px;">Nothing logged.</p>`; }
+  else {
+    let h=`<div class="modal-section"><div class="modal-section-title">At a glance</div><div style="font-size:30px;letter-spacing:5px;">${(e.symbols||[]).join('')}</div></div>`;
+    if (e.lunar) h+=ms('🌙 Lunar',`${e.lunar.icon} ${e.lunar.phase}<br><small style="color:var(--text2);">${e.lunar.paksha} · ${e.lunar.tithiName}</small>`);
+    if (e.period?.active) h+=ms('🔴 Period',`Day ${e.period.day}${e.period.intensity?' · Intensity '+e.period.intensity+'/10':''}`);
+    if (e.hadOutburst) { h+=ms('⚡ Outburst',e.outburstText); h+=mtags(e.outburstTags,e.outburstPeople); }
+    if (e.hadControlled) { h+=ms('🌊 Controlled',e.controlledText); h+=mtags(e.controlledTags,e.controlledPeople); }
+    if (e.hadInsta) { h+=ms('📱 Instagram',e.instaFeel); h+=mtags(e.instaTags,e.instaPeople); }
+    if (e.cannabis && e.cannabisEntries?.length) h+=ms('🌿 Cannabis',e.cannabisEntries.map(c=>`${c.time||'—'} · ${c.qty}${c.unit} · ${c.form}`).join('<br>'));
+    const sl=Object.entries(e.substances||{}).filter(([,v])=>v.qty>0).map(([k,v])=>`${k}: ${v.qty}${v.unit?` ${v.unit}`:''}`);
+    if (sl.length) h+=ms('Other',sl.join(' · '));
+    if (e.hadExercise && e.exerciseEntries?.length) h+=ms('🏃 Exercise',e.exerciseEntries.map(x=>`${x.type}${x.duration?' ('+x.duration+')':''}`).join('<br>'));
+    document.getElementById('modalBody').innerHTML=h;
+  }
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function ms(title,content){return `<div class="modal-section"><div class="modal-section-title">${title}</div><div class="modal-text">${content||'—'}</div></div>`;}
+function mtags(kw=[],people=[]){
+  if(!kw.length&&!people.length) return '';
+  return `<div class="modal-tags">${kw.map(t=>`<span class="modal-tag">${t}</span>`).join('')}${people.map(p=>`<span class="modal-tag people">${p}</span>`).join('')}</div><br>`;
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+
+// ── PATTERNS ──
+function renderPatterns() {
+  const entries=Object.values(db);
+  const kw={}, ppl={};
+  entries.forEach(e=>{
+    const add=(map,arr)=>(arr||[]).forEach(t=>{map[t]=(map[t]||0)+1;});
+    add(kw,e.outburstTags); add(kw,e.controlledTags); add(kw,e.instaTags);
+    add(ppl,e.outburstPeople); add(ppl,e.controlledPeople); add(ppl,e.instaPeople);
+  });
+  const cloud=(id,map,cls='')=>{
+    const el=document.getElementById(id); if(!el)return;
+    const s=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+    el.innerHTML=s.length?s.map(([k,v])=>`<div class="keyword-chip ${cls}">${k}<span class="keyword-count">${v}</span></div>`).join(''):`<span style="color:var(--muted);font-size:13px;">None yet.</span>`;
+  };
+  cloud('allKeywords',kw);
+  cloud('allPeople',ppl,'people-chip');
+  const sb=document.getElementById('statsBody'); if(!sb)return;
+  const total=entries.length;
+  sb.innerHTML=[
+    ['Days logged',total],
+    ['Outburst days',entries.filter(e=>e.hadOutburst).length],
+    ['Controlled outburst days',entries.filter(e=>e.hadControlled).length],
+    ['Instagram days',entries.filter(e=>e.hadInsta).length],
+    ['Cannabis days',entries.filter(e=>e.cannabis).length],
+    ['Exercise days',entries.filter(e=>e.hadExercise).length],
+  ].map(([l,v])=>`<div class="pattern-row"><span class="pattern-row-label">${l}</span><span class="pattern-row-val">${v}</span></div>`).join('');
+}
+
+// ── NAV ──
+function showPanel(name,btn) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`panel-${name}`).classList.add('active');
+  btn.classList.add('active');
+  if(name==='calendar') renderCalendar();
+  if(name==='patterns') renderPatterns();
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function loadTodayIfExists() {
+  const e=db[today()]; if(!e)return;
+  if(e.hadOutburst){setYN('outburst',true);document.getElementById('outburstText').value=e.outburstText||'';sectionTags.outburst=[...(e.outburstTags||[])];sectionPeople.outburst=[...(e.outburstPeople||[])];renderTagsAndPeople('outburst');}
+  if(e.hadControlled){setYN('controlled',true);document.getElementById('controlledText').value=e.controlledText||'';sectionTags.controlled=[...(e.controlledTags||[])];sectionPeople.controlled=[...(e.controlledPeople||[])];renderTagsAndPeople('controlled');}
+  if(e.hadInsta){setYN('insta',true);document.getElementById('instaFeel').value=e.instaFeel||'';sectionTags.insta=[...(e.instaTags||[])];sectionPeople.insta=[...(e.instaPeople||[])];renderTagsAndPeople('insta');}
+  if(e.cannabis){setSubYN('cannabis',true);cannabisEntries=[...(e.cannabisEntries||[])];renderCannabisEntries();}
+  if(e.hadExercise){setYN('exercise',true);exerciseEntries=[...(e.exerciseEntries||[])];renderExerciseEntries();}
+  ['sugar','alcohol','chai','cig'].forEach(k=>{
+    if(e.substances?.[k]){setSubYN(k,true);const q=document.getElementById(`${k}-qty`);const u=document.getElementById(`${k}-unit`);if(q)q.value=e.substances[k].qty;if(u)u.value=e.substances[k].unit;}
+  });
+}
+</script>
+</body>
+</html>
