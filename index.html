@@ -172,6 +172,23 @@
   .time-row input[type="time"] { flex: 1; }
   .time-untracked-btn { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 12px; font-family: var(--mono); white-space: nowrap; transition: all 0.15s; }
   .time-untracked-btn.active { border-color: var(--muted); color: var(--muted); background: var(--surface); }
+  .cal-day.has-outburst { background: rgba(220,60,60,0.18); border-color: rgba(220,60,60,0.4); }
+  .cal-day.has-controlled { background: rgba(60,180,120,0.15); border-color: rgba(60,180,120,0.35); }
+  .cal-day.has-outburst .cal-day-num { color: #e05555; }
+  .cal-day.has-controlled .cal-day-num { color: #3db87a; }
+  .cal-moon-corner { position: absolute; top: 3px; right: 4px; font-size: 9px; line-height: 1; opacity: 0.7; }
+  .cal-day { position: relative; }
+  .outburst-chart-wrap { margin-bottom: 0; }
+  .chart-bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; margin-top: 10px; }
+  .chart-col { display: flex; flex-direction: column; align-items: center; flex: 1; gap: 2px; }
+  .chart-bar-pair { display: flex; gap: 2px; align-items: flex-end; width: 100%; justify-content: center; }
+  .chart-bar { width: 10px; border-radius: 3px 3px 0 0; transition: height 0.3s; min-height: 2px; }
+  .chart-bar.outburst { background: #e05555; }
+  .chart-bar.controlled { background: #3db87a; }
+  .chart-week-label { font-size: 9px; font-family: var(--mono); color: var(--muted); text-align: center; margin-top: 4px; white-space: nowrap; }
+  .chart-legend { display: flex; gap: 14px; margin-top: 10px; }
+  .chart-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); font-family: var(--mono); }
+  .chart-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -203,6 +220,14 @@
   <main>
 
     <div class="panel active" id="panel-log">
+
+      <div class="section-card" style="padding:14px 20px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <label style="font-size:12px;font-family:var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:0;white-space:nowrap;">Logging for</label>
+          <input type="date" id="logDatePicker" style="flex:1;font-family:var(--mono);font-size:14px;" onchange="switchLogDate(this.value)" />
+          <button onclick="switchLogDate(todayStr())" style="background:none;border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:var(--mono);white-space:nowrap;">Today</button>
+        </div>
+      </div>
 
       <div class="section-card">
         <div class="section-label">🌙 Lunar Phase</div>
@@ -250,7 +275,7 @@
       </div>
 
       <div class="section-card">
-        <div class="section-label">🌊 Controlled Outbursts</div>
+        <div class="section-label">🧘 Controlled Outbursts</div>
         <div class="yn-row">
           <span class="yn-label">Did I catch myself before acting?</span>
           <div class="yn-btns">
@@ -371,7 +396,7 @@
         </div>
       </div>
 
-      <button class="submit-btn" onclick="saveDay()">Save Today's Log</button>
+      <button class="submit-btn" id="saveDayBtn" onclick="saveDay()">Save Log</button>
     </div>
 
     <div class="panel" id="panel-calendar">
@@ -388,6 +413,14 @@
     </div>
 
     <div class="panel" id="panel-patterns">
+      <div class="pattern-card outburst-chart-wrap">
+        <div class="pattern-title">⚡ Outbursts over time</div>
+        <div class="chart-legend">
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#e05555;"></div>Outburst</div>
+          <div class="chart-legend-item"><div class="chart-legend-dot" style="background:#3db87a;"></div>Controlled</div>
+        </div>
+        <div class="chart-bars" id="outburstChart"></div>
+      </div>
       <div class="pattern-card">
         <div class="pattern-title">All Keywords</div>
         <div class="keyword-cloud" id="allKeywords"></div>
@@ -426,8 +459,63 @@ let periodData = JSON.parse(localStorage.getItem('rl_period') || '{"active":fals
 
 function saveDb() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
 function savePeriod() { localStorage.setItem('rl_period', JSON.stringify(periodData)); }
-const today = () => new Date().toISOString().slice(0,10);
+const todayStr = () => new Date().toISOString().slice(0,10);
+var activeLogDate = todayStr();
+const today = () => activeLogDate;
 const fmtDate = d => new Date(d+'T00:00:00').toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+function switchLogDate(ds) {
+  activeLogDate = ds;
+  var picker = document.getElementById('logDatePicker');
+  if(picker) picker.value = ds;
+  var btn = document.getElementById('saveDayBtn');
+  var isToday = ds === todayStr();
+  if(btn) btn.textContent = isToday ? 'Save Log' : 'Save Entry for ' + fmtDate(ds);
+  // reset all form state
+  resetFormState();
+  loadEntryForDate(ds);
+}
+
+function resetFormState() {
+  ['outburst','controlled','insta','exercise'].forEach(function(k){
+    ynState[k]=false;
+    var y=document.getElementById(k+'-yes'); if(y){y.classList.remove('yes-active');}
+    var n=document.getElementById(k+'-no'); if(n){n.classList.remove('no-active');}
+    var d=document.getElementById(k+'Detail'); if(d){d.style.display='none';}
+    if(behaviourEntries[k]!==undefined) behaviourEntries[k]=[];
+    var c=document.getElementById(k+'Entries'); if(c) c.innerHTML='';
+  });
+  ['cannabis','sugar','alcohol','chai','cig'].forEach(function(k){
+    subState[k]=false;
+    var y=document.getElementById(k+'-yes'); if(y){y.classList.remove('yes-active');}
+    var n=document.getElementById(k+'-no'); if(n){n.classList.remove('no-active');}
+    var d=document.getElementById(k+'Detail'); if(d){d.style.display='none';}
+  });
+  cannabisEntries=[]; document.getElementById('cannabisEntries').innerHTML='';
+  exerciseEntries=[]; document.getElementById('exerciseEntries').innerHTML='';
+  ['sugar','alcohol','chai','cig'].forEach(function(k){
+    var q=document.getElementById(k+'-qty'); if(q) q.value='';
+  });
+  // reset period
+  setPeriod(false);
+}
+
+function loadEntryForDate(ds) {
+  var e=db[ds]; if(!e) return;
+  if(e.hadOutburst){setYN('outburst',true);behaviourEntries.outburst=e.outburstEntries&&e.outburstEntries.length?[].concat(e.outburstEntries):[{text:e.outburstText||'',tags:[].concat(e.outburstTags||[]),people:[].concat(e.outburstPeople||[])}];renderBehaviourEntries('outburst');}
+  if(e.hadControlled){setYN('controlled',true);behaviourEntries.controlled=e.controlledEntries&&e.controlledEntries.length?[].concat(e.controlledEntries):[{text:e.controlledText||'',tags:[].concat(e.controlledTags||[]),people:[].concat(e.controlledPeople||[])}];renderBehaviourEntries('controlled');}
+  if(e.hadInsta){setYN('insta',true);behaviourEntries.insta=e.instaEntries&&e.instaEntries.length?[].concat(e.instaEntries):[{text:e.instaFeel||'',tags:[].concat(e.instaTags||[]),people:[].concat(e.instaPeople||[])}];renderBehaviourEntries('insta');}
+  if(e.cannabis){setSubYN('cannabis',true);cannabisEntries=[].concat(e.cannabisEntries||[]);renderCannabisEntries();}
+  if(e.hadExercise){setYN('exercise',true);exerciseEntries=[].concat(e.exerciseEntries||[]);renderExerciseEntries();}
+  ['sugar','alcohol','chai','cig'].forEach(function(k){
+    if(e.substances&&e.substances[k]){setSubYN(k,true);var q=document.getElementById(k+'-qty');var u=document.getElementById(k+'-unit');if(q)q.value=e.substances[k].qty;if(u)u.value=e.substances[k].unit;}
+  });
+  if(e.period&&e.period.active){
+    periodData.active=true; periodData.intensity=e.period.intensity||0;
+    setPeriod(true);
+    document.querySelectorAll('.int-btn').forEach(function(b,i){b.classList.toggle('active',i+1===periodData.intensity);});
+  }
+}
 
 window.onload = function() {
   if (API_KEY || skipApi) { launch(); }
@@ -450,12 +538,14 @@ function skipApiKey() {
 function launch() {
   document.getElementById('appShell').style.display = 'flex';
   document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'});
+  var picker = document.getElementById('logDatePicker');
+  if(picker) { picker.value = todayStr(); picker.max = todayStr(); }
   loadLunar();
   buildIntensityBtns();
   updatePeriodUI();
   renderCalendar();
   renderPatterns();
-  loadTodayIfExists();
+  loadEntryForDate(todayStr());
 }
 
 function getLunarIST() {
@@ -750,8 +840,7 @@ function buildSymbols(e) {
   var l = getLunarIST();
   var s = [l.icon];
   if(e.period&&e.period.active) s.push('🔴');
-  if(e.hadOutburst) s.push('⚡');
-  if(e.hadControlled) s.push('🌊');
+  if(e.hadControlled) s.push('🧘');
   if(e.hadInsta) s.push('📱');
   if(e.cannabis) s.push('🌿');
   if(e.substances&&e.substances.alcohol) s.push('🍷');
@@ -814,8 +903,17 @@ function renderMonth() {
   for(var i=0;i<first;i++) h+='<div class="cal-day empty"></div>';
   for(var d=1;d<=days;d++) {
     var ds=y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
-    var e=db[ds]; var syms=(e&&e.symbols||[]).join('');
-    h+='<div class="cal-day'+(ds===td?' today':'')+'" onclick="openModal(\''+ds+'\')"><div class="cal-day-num">'+d+'</div><div class="cal-syms">'+syms+'</div></div>';
+    var e=db[ds];
+    var colorClass = '';
+    if(e&&e.hadOutburst) colorClass='has-outburst';
+    else if(e&&e.hadControlled) colorClass='has-controlled';
+    var moon = (e&&e.lunar&&e.lunar.icon)||'';
+    // symbols without moon
+    var syms=(e&&e.symbols||[]).filter(function(s){return s!==moon;}).join('');
+    h+='<div class="cal-day'+( ds===td?' today':'')+' '+colorClass+'" onclick="openModal(\''+ds+'\')">'
+      +(moon?'<div class="cal-moon-corner">'+moon+'</div>':'')
+      +'<div class="cal-day-num">'+d+'</div>'
+      +'<div class="cal-syms">'+syms+'</div></div>';
   }
   h+='</div>';
   document.getElementById('calBody').innerHTML=h;
@@ -902,6 +1000,37 @@ function renderPatterns() {
     ['Cannabis days',entries.filter(function(e){return e.cannabis;}).length],
     ['Exercise days',entries.filter(function(e){return e.hadExercise;}).length],
   ].map(function(rv){return '<div class="pattern-row"><span class="pattern-row-label">'+rv[0]+'</span><span class="pattern-row-val">'+rv[1]+'</span></div>';}).join('');
+
+  // weekly outburst chart — last 8 weeks
+  var chart=document.getElementById('outburstChart'); if(!chart)return;
+  var weeks=[];
+  var now=new Date();
+  for(var w=7;w>=0;w--){
+    var weekStart=new Date(now);
+    weekStart.setDate(now.getDate()-now.getDay()-w*7);
+    var outCount=0,ctrlCount=0;
+    for(var dd=0;dd<7;dd++){
+      var d=new Date(weekStart); d.setDate(weekStart.getDate()+dd);
+      var ds=d.toISOString().slice(0,10);
+      var e=db[ds];
+      if(e&&e.hadOutburst) outCount++;
+      if(e&&e.hadControlled) ctrlCount++;
+    }
+    var label=weekStart.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    weeks.push({label:label,out:outCount,ctrl:ctrlCount});
+  }
+  var maxVal=Math.max(1,Math.max.apply(null,weeks.map(function(w){return Math.max(w.out,w.ctrl);})));
+  chart.innerHTML=weeks.map(function(w){
+    var outH=Math.round((w.out/maxVal)*68);
+    var ctrlH=Math.round((w.ctrl/maxVal)*68);
+    return '<div class="chart-col">'
+      +'<div class="chart-bar-pair">'
+      +'<div class="chart-bar outburst" style="height:'+(outH||2)+'px;" title="'+w.out+' outburst days"></div>'
+      +'<div class="chart-bar controlled" style="height:'+(ctrlH||2)+'px;" title="'+w.ctrl+' controlled days"></div>'
+      +'</div>'
+      +'<div class="chart-week-label">'+w.label+'</div>'
+      +'</div>';
+  }).join('');
 }
 
 function showPanel(name,btn) {
@@ -916,17 +1045,8 @@ function showToast(msg) {
   var t=document.getElementById('toast'); t.textContent=msg;
   t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},2500);
 }
-function loadTodayIfExists() {
-  var e=db[today()]; if(!e)return;
-  if(e.hadOutburst){setYN('outburst',true);behaviourEntries.outburst=e.outburstEntries&&e.outburstEntries.length?[].concat(e.outburstEntries):[{text:e.outburstText||'',tags:[].concat(e.outburstTags||[]),people:[].concat(e.outburstPeople||[])}];renderBehaviourEntries('outburst');}
-  if(e.hadControlled){setYN('controlled',true);behaviourEntries.controlled=e.controlledEntries&&e.controlledEntries.length?[].concat(e.controlledEntries):[{text:e.controlledText||'',tags:[].concat(e.controlledTags||[]),people:[].concat(e.controlledPeople||[])}];renderBehaviourEntries('controlled');}
-  if(e.hadInsta){setYN('insta',true);behaviourEntries.insta=e.instaEntries&&e.instaEntries.length?[].concat(e.instaEntries):[{text:e.instaFeel||'',tags:[].concat(e.instaTags||[]),people:[].concat(e.instaPeople||[])}];renderBehaviourEntries('insta');}
-  if(e.cannabis){setSubYN('cannabis',true);cannabisEntries=[].concat(e.cannabisEntries||[]);renderCannabisEntries();}
-  if(e.hadExercise){setYN('exercise',true);exerciseEntries=[].concat(e.exerciseEntries||[]);renderExerciseEntries();}
-  ['sugar','alcohol','chai','cig'].forEach(function(k){
-    if(e.substances&&e.substances[k]){setSubYN(k,true);var q=document.getElementById(k+'-qty');var u=document.getElementById(k+'-unit');if(q)q.value=e.substances[k].qty;if(u)u.value=e.substances[k].unit;}
-  });
-}
+
+
 </script>
 </body>
 </html>
